@@ -1,0 +1,48 @@
+name: Build Flutter APK
+
+# يبدأ هذا الـ workflow تلقائياً عند رفع أي تغييرات (push) إلى الفرع الرئيسي (main)
+on:
+  push:
+    branches: [ "main" ]
+  # هذا السطر يسمح لك بتشغيل الـ workflow يدوياً من واجهة GitHub
+  workflow_dispatch:
+
+jobs:
+  build:
+    # سيتم تشغيل عملية البناء على سيرفر Ubuntu Linux الأحدث
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. تحميل نسخة من الكود الخاص بك إلى السيرفر
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. تثبيت Java (ضروري لبناء تطبيقات أندرويد)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. تثبيت Flutter SDK (يمكنك تغيير إصدار فلاتر هنا إذا احتجت)
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2' # يمكنك استخدام أحدث إصدار مستقر
+          channel: 'stable'
+          cache: true # تفعيل التخزين المؤقت لتسريع البناء في المرات القادمة
+
+      # 4. تثبيت الاعتماديات (Dependencies)
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 5. بناء ملف الـ APK
+      - name: Build APK
+        run: flutter build apk --release
+
+      # 6. رفع ملف الـ APK الناتج كـ "artifact" لكي تتمكن من تحميله
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
