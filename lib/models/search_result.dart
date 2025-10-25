@@ -2,30 +2,38 @@
 
 class SearchResult {
   final String primaryName;
-    final List<String> otherNames;
-      final int confidence;
-        final List<Map<String, String>> socialAccounts;
-          final List<String> tags;
+  final List<String> otherNames;
+  final int confidence;
+  final List<Map<String, String>> socialAccounts;
+  final List<String> tags;
 
-            SearchResult({
-                required this.primaryName,
-                    required this.otherNames,
-                        required this.confidence,
-                            required this.socialAccounts,
-                                required this.tags,
-                                  });
+  SearchResult({
+    required this.primaryName,
+    required this.otherNames,
+    required this.confidence,
+    required this.socialAccounts,
+    required this.tags,
+  });
 
-                                    // دالة لتحويل البيانات القادمة من Firebase إلى هذا النموذج
-                                      factory SearchResult.fromFirestore(Map<String, dynamic> data) {
-                                          return SearchResult(
-                                                primaryName: data['primaryName'] ?? 'اسم غير متوفر',
-                                                      otherNames: List<String>.from(data['otherNames'] ?? []),
-                                                            confidence: data['confidence'] ?? 0,
-                                                                  socialAccounts: List<Map<String, String>>.from(
-                                                                            (data['socialAccounts'] ?? []).map((item) => Map<String, String>.from(item))
-                                                                                  ),
-                                                                                        tags: List<String>.from(data['tags'] ?? []),
-                                                                                            );
-                                                                                              }
-                                                                                              }
-                                                                                              
+  // --- START: هذا هو الجزء الذي تم تعديله بالكامل ---
+  factory SearchResult.fromFirestore(Map<String, dynamic> data) {
+    // نقرأ قائمة الأسماء من الحقل الصحيح 'names'
+    final List<String> allNames = List<String>.from(data['names'] ?? []);
+
+    // الاسم الأساسي هو أول اسم في القائمة، أو "اسم غير متوفر" إذا كانت القائمة فارغة
+    final String pName = allNames.isNotEmpty ? allNames.first : 'اسم غير متوفر';
+
+    // الأسماء الأخرى هي باقي القائمة (بدون الاسم الأول)
+    final List<String> oNames = allNames.length > 1 ? allNames.sublist(1) : [];
+
+    return SearchResult(
+      primaryName: pName,
+      otherNames: oNames,
+      // بما أن هذه الحقول غير موجودة الآن، سنعطيها قيماً افتراضية فارغة
+      confidence: data['syncCount'] ?? 0, // يمكننا استخدام syncCount كمؤشر ثقة مبدئي
+      socialAccounts: [], // قائمة فارغة حالياً
+      tags: [],           // قائمة فارغة حالياً
+    );
+  }
+  // --- END: نهاية الجزء المعدل ---
+}
